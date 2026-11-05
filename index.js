@@ -2,6 +2,9 @@ import { Bot, webhookCallback } from 'grammy';
 
 const bot = new Bot(process.env.BOT_TOKEN);
 
+// Вспомогательная функция для умной паузы
+const sleep = (ms) => new Promise(resolve => setTimeout(resolve, ms));
+
 bot.command("start", (ctx) => {
     ctx.reply("Привет! Бот-модератор работает 🚀");
 });
@@ -9,10 +12,8 @@ bot.command("start", (ctx) => {
 bot.on("message", async (ctx) => {
     const GALLERY_THREAD_ID = 18;
 
-    // Проверяем, что сообщение написано именно в теме "Галерея"
     if (ctx.message.message_thread_id === GALLERY_THREAD_ID) {
         
-        // Проверяем наличие медиаконтента
         const hasMedia = ctx.message.photo || 
                          ctx.message.video || 
                          ctx.message.document || 
@@ -21,18 +22,17 @@ bot.on("message", async (ctx) => {
 
         if (!hasMedia) {
             try {
-                // Удаляем текстовое сообщение
                 await ctx.deleteMessage();
                 
-                // Отправляем предупреждение
                 const warning = await ctx.reply("⚠️ В этой теме разрешены только картинки и видео с подписями. Текст удален.", {
                     message_thread_id: GALLERY_THREAD_ID
                 });
                 
-                // Удаляем сообщение бота через 5 секунд (5000 миллисекунд)
-                setTimeout(() => {
-                    ctx.api.deleteMessage(ctx.chat.id, warning.message_id).catch(() => {});
-                }, 5000);
+                // Искусственно удерживаем функцию в рабочем состоянии 5 секунд
+                await sleep(5000);
+                
+                // Теперь удаляем сообщение бота
+                await ctx.api.deleteMessage(ctx.chat.id, warning.message_id).catch(() => {});
             } catch (error) {
                 console.error("Ошибка удаления:", error);
             }
